@@ -1,0 +1,14 @@
+{
+  "name": "data-analytics-lib",
+  "version": "1.0.0",
+  "description": "Shared analytics library for React and Angular MFE projects",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.8.3"
+  }
+}
