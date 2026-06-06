@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1780730643777" clover="3.2.0">
+  <project timestamp="1780730643777" name="All files">
+    <metrics statements="23" coveredstatements="23" conditionals="12" coveredconditionals="12" methods="2" coveredmethods="2" elements="37" coveredelements="37" complexity="0" loc="23" ncloc="23" packages="1" files="2" classes="2"/>
+    <file name="analytics.ts" path="/home/claude/data-analytics-lib/src/analytics.ts">
+      <metrics statements="14" coveredstatements="14" conditionals="6" coveredconditionals="6" methods="1" coveredmethods="1"/>
+      <line num="2" count="1" type="stmt"/>
+      <line num="4" count="1" type="stmt"/>
+      <line num="5" count="12" type="stmt"/>
+      <line num="6" count="12" type="stmt"/>
+      <line num="11" count="12" type="stmt"/>
+      <line num="12" count="12" type="stmt"/>
+      <line num="14" count="12" type="stmt"/>
+      <line num="22" count="10" type="stmt"/>
+      <line num="24" count="9" type="cond" truecount="2" falsecount="0"/>
+      <line num="25" count="3" type="stmt"/>
+      <line num="31" count="3" type="stmt"/>
+      <line num="37" count="6" type="stmt"/>
+      <line num="42" count="3" type="stmt"/>
+      <line num="48" count="3" type="stmt"/>
+    </file>
+    <file name="config.ts" path="/home/claude/data-analytics-lib/src/config.ts">
+      <metrics statements="9" coveredstatements="9" conditionals="6" coveredconditionals="6" methods="1" coveredmethods="1"/>
+      <line num="1" count="5" type="stmt"/>
+      <line num="3" count="5" type="stmt"/>
+      <line num="4" count="5" type="cond" truecount="2" falsecount="0"/>
+      <line num="6" count="5" type="stmt"/>
+      <line num="7" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="9" count="3" type="cond" truecount="2" falsecount="0"/>
+      <line num="10" count="1" type="stmt"/>
+      <line num="13" count="2" type="stmt"/>
+      <line num="16" count="5" type="stmt"/>
+    </file>
+  </project>
+</coverage>
