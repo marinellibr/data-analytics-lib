@@ -4,16 +4,39 @@ Biblioteca agnóstica a framework para rastrear eventos analíticos em projetos 
 
 ## 📦 Instalação
 
-### Via npm
+### Instalação Local (Git)
+
+Como a biblioteca ainda não está publicada no npm, instale diretamente do repositório GitHub:
 
 ```bash
-npm install data-analytics-lib
+npm install github:marinellibr/data-analytics-lib
 ```
 
-### Via yarn
+Ou especifique a branch/tag:
 
 ```bash
-yarn add data-analytics-lib
+npm install github:marinellibr/data-analytics-lib#main
+```
+
+### Instalação com arquivo local
+
+Se preferir instalar localmente (em desenvolvimento):
+
+```bash
+npm install /caminho/para/data-analytics-lib
+```
+
+Ou via referência relativa (se em monorepo):
+
+```bash
+npm install ../data-analytics-lib
+```
+
+**Após instalar**, compile a biblioteca:
+
+```bash
+cd node_modules/data-analytics-lib
+npm run build
 ```
 
 ## ⚙️ Configuração
@@ -177,6 +200,7 @@ await handleUserAction('add_to_cart');
 
 ## 🎯 Roadmap
 
+- [ ] Publicar no npm
 - [ ] Implementar retry com backoff exponencial
 - [ ] Suporte a batch de eventos
 - [ ] Middleware para logging automático
