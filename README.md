@@ -60,14 +60,15 @@ A biblioteca utiliza `NODE_ENV` para determinar o ambiente automaticamente:
 ### React
 
 ```typescript
-import { trackEvent } from 'data-analytics-lib';
+import { trackClick, trackPageLoad } from 'data-analytics-lib';
 
 function MyComponent() {
   const handleClick = async () => {
-    const response = await trackEvent({
+    const response = await trackClick({
       appID: 'mfe-dashboard',
-      action: 'button_click',
-      where: '/analytics'
+      sessionID: 's001',
+      where: '/analytics',
+      target: '#btn-export'
     });
 
     if (response.success) {
@@ -85,7 +86,7 @@ function MyComponent() {
 
 ```typescript
 import { Component } from '@angular/core';
-import { trackEvent } from 'data-analytics-lib';
+import { trackSession } from 'data-analytics-lib';
 
 @Component({
   selector: 'app-analytics',
@@ -93,10 +94,12 @@ import { trackEvent } from 'data-analytics-lib';
 })
 export class AnalyticsComponent {
   async onTrack() {
-    const response = await trackEvent({
+    const response = await trackSession({
+      sessionID: 's001',
       appID: 'mfe-reports',
-      action: 'generate_report',
-      where: '/reports'
+      device: 'desktop',
+      browser: 'Chrome 124',
+      referrer: 'google.com'
     });
 
     if (!response.success) {
@@ -108,20 +111,54 @@ export class AnalyticsComponent {
 
 ## 📋 API
 
-### `trackEvent(entry: AnalyticsEntry): Promise<AnalyticsResponse>`
+Cada função envia um POST para o endpoint correspondente do backend e adiciona automaticamente o timestamp no formato `dd/MM/yyyy hh:mm AM/PM`:
 
-Rastreia um evento enviando os dados ao backend.
+| Função | Endpoint | Timestamp adicionado |
+|--------|----------|----------------------|
+| `trackClick(event)` | `/click-events` | `dateTime` |
+| `trackPageLoad(event)` | `/page-load-events` | `dateTime` |
+| `trackHttpCall(event)` | `/http-calls` | `dateTime` |
+| `trackSession(session)` | `/sessions` | `startedAt` |
 
 **Parâmetros:**
 ```typescript
-interface AnalyticsEntry {
-  appID: string;    // ID único da aplicação (ex: 'mfe-dashboard')
-  action: string;   // Ação realizada (ex: 'button_click', 'page_view')
-  where: string;    // Localização/página (ex: '/dashboard', '/settings')
+// trackClick
+interface ClickEventInput {
+  appID: string;     // ID único da aplicação (ex: 'crm')
+  sessionID: string; // ID da sessão do usuário (ex: 's001')
+  where: string;     // Página onde ocorreu (ex: '/crm/contacts')
+  target: string;    // Seletor CSS ou label do elemento (ex: '#btn-save')
+}
+
+// trackPageLoad
+interface PageLoadEventInput {
+  appID: string;
+  sessionID: string;
+  where: string;
+  timeOnPage: number; // tempo na página em ms
+}
+
+// trackHttpCall
+interface HttpCallEventInput {
+  appID: string;
+  sessionID: string;
+  endpoint: string;   // ex: '/api/crm/contacts'
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  httpStatus: number; // ex: 200
+  duration: number;   // tempo de resposta em ms
+}
+
+// trackSession
+interface SessionInput {
+  sessionID: string;
+  appID: string;
+  device: 'desktop' | 'mobile' | 'tablet';
+  browser: string;  // ex: 'Chrome 124'
+  referrer: string; // ex: 'google.com' ou 'direct'
 }
 ```
 
-**Retorno:**
+**Retorno (todas as funções):**
 ```typescript
 interface AnalyticsResponse {
   success: boolean;
@@ -136,8 +173,8 @@ interface AnalyticsResponse {
 
 ## ✨ Funcionalidades Automáticas
 
-- ✅ **DateTime**: A data/hora atual é adicionada automaticamente ao objeto enviado
-- ✅ **POST**: Requisição HTTP POST é feita para `/new-entry` do backend
+- ✅ **DateTime**: A data/hora atual é adicionada automaticamente ao objeto enviado, no formato `dd/MM/yyyy hh:mm AM/PM` (campo `dateTime`, ou `startedAt` para sessões)
+- ✅ **POST**: Requisição HTTP POST é feita para o endpoint correspondente do backend (`/click-events`, `/page-load-events`, `/http-calls`, `/sessions`)
 - ✅ **Erro Estruturado**: Erros de rede e HTTP são capturados e retornados de forma estruturada
 - ✅ **TypeScript**: Typings completos em TypeScript
 
@@ -178,13 +215,14 @@ Saída: pasta `dist/` com arquivos `.js` e `.d.ts`
 ## 📝 Exemplo Completo
 
 ```typescript
-import { trackEvent } from 'data-analytics-lib';
+import { trackClick, trackHttpCall } from 'data-analytics-lib';
 
-const handleUserAction = async (action: string) => {
-  const response = await trackEvent({
+const handleAddToCart = async () => {
+  const response = await trackClick({
     appID: 'mfe-shop',
-    action,
-    where: window.location.pathname
+    sessionID: 's042',
+    where: window.location.pathname,
+    target: '#btn-add-to-cart'
   });
 
   if (response.success) {
@@ -194,8 +232,15 @@ const handleUserAction = async (action: string) => {
   }
 };
 
-// Uso
-await handleUserAction('add_to_cart');
+// Rastreando uma chamada HTTP
+await trackHttpCall({
+  appID: 'mfe-shop',
+  sessionID: 's042',
+  endpoint: '/api/cart',
+  method: 'POST',
+  httpStatus: 201,
+  duration: 240
+});
 ```
 
 ## 🎯 Roadmap

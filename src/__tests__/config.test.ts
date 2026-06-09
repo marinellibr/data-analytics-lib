@@ -1,4 +1,9 @@
-import { ANALYTICS_ENDPOINT } from '../config';
+import {
+  CLICK_EVENTS_ENDPOINT,
+  PAGE_LOAD_EVENTS_ENDPOINT,
+  HTTP_CALLS_ENDPOINT,
+  SESSIONS_ENDPOINT,
+} from '../config';
 
 describe('config', () => {
   describe('getApiUrl', () => {
@@ -50,9 +55,12 @@ describe('config', () => {
     });
   });
 
-  describe('ANALYTICS_ENDPOINT', () => {
-    it('should export correct endpoint', () => {
-      expect(ANALYTICS_ENDPOINT).toBe('/new-entry');
+  describe('endpoints', () => {
+    it('should export correct endpoints', () => {
+      expect(CLICK_EVENTS_ENDPOINT).toBe('/click-events');
+      expect(PAGE_LOAD_EVENTS_ENDPOINT).toBe('/page-load-events');
+      expect(HTTP_CALLS_ENDPOINT).toBe('/http-calls');
+      expect(SESSIONS_ENDPOINT).toBe('/sessions');
     });
   });
 });

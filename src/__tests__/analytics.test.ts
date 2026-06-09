@@ -1,97 +1,166 @@
-import { trackEvent } from '../analytics';
+import { trackClick, trackPageLoad, trackHttpCall, trackSession } from '../analytics';
 import * as config from '../config';
 
 jest.mock('../config');
 
-describe('trackEvent', () => {
+const DATE_TIME_REGEX = /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2} (AM|PM)$/;
+
+const mockFetchSuccess = (response: unknown = { success: true }) => {
+  (global.fetch as jest.Mock).mockResolvedValueOnce({
+    ok: true,
+    json: async () => response,
+  });
+};
+
+const lastRequestBody = () => {
+  const callArgs = (global.fetch as jest.Mock).mock.calls[0][1];
+  return JSON.parse(callArgs.body);
+};
+
+describe('track functions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = jest.fn();
+    (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
   });
 
-  describe('successful request', () => {
-    it('should add dateTime to entry and send POST request with correct structure', async () => {
-      const mockResponse = { success: true, id: '123' };
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
+  describe('trackClick', () => {
+    it('should POST to /click-events with all fields plus formatted dateTime', async () => {
+      mockFetchSuccess({ success: true, id: '123' });
+
+      const response = await trackClick({
+        appID: 'crm',
+        sessionID: 's001',
+        where: '/crm/contacts',
+        target: '#btn-new-contact',
       });
-
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'test-app',
-        action: 'test_action',
-        where: '/test',
-      };
-
-      const response = await trackEvent(entry);
 
       expect(response.success).toBe(true);
-      expect(response.data).toEqual(mockResponse);
-      expect(response.error).toBeUndefined();
-    });
-
-    it('should call fetch with correct URL and headers', async () => {
-      const mockResponse = { success: true };
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
-
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'app1',
-        action: 'action1',
-        where: '/page1',
-      };
-
-      await trackEvent(entry);
-
+      expect(response.data).toEqual({ success: true, id: '123' });
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/new-entry',
+        'http://localhost:3000/click-events',
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         })
       );
+
+      const body = lastRequestBody();
+      expect(body.appID).toBe('crm');
+      expect(body.sessionID).toBe('s001');
+      expect(body.where).toBe('/crm/contacts');
+      expect(body.target).toBe('#btn-new-contact');
+      expect(body.dateTime).toMatch(DATE_TIME_REGEX);
     });
 
-    it('should include all entry fields plus dateTime in request body', async () => {
-      const mockResponse = { success: true };
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
+    it('should preserve original event object (not mutate)', async () => {
+      mockFetchSuccess();
 
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'my-app',
-        action: 'click',
-        where: '/dashboard',
+      const event = {
+        appID: 'crm',
+        sessionID: 's001',
+        where: '/crm/contacts',
+        target: '#btn-new-contact',
       };
 
-      const beforeTime = new Date();
-      await trackEvent(entry);
-      const afterTime = new Date();
+      const eventBefore = JSON.stringify(event);
+      await trackClick(event);
 
-      const callArgs = (global.fetch as jest.Mock).mock.calls[0][1];
-      const body = JSON.parse(callArgs.body);
+      expect(JSON.stringify(event)).toBe(eventBefore);
+      expect((event as any).dateTime).toBeUndefined();
+    });
+  });
 
-      expect(body.appID).toBe('my-app');
-      expect(body.action).toBe('click');
-      expect(body.where).toBe('/dashboard');
-      expect(body.dateTime).toBeDefined();
+  describe('trackPageLoad', () => {
+    it('should POST to /page-load-events with all fields plus formatted dateTime', async () => {
+      mockFetchSuccess();
 
-      const parsedDateTime = new Date(body.dateTime);
-      expect(parsedDateTime.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
-      expect(parsedDateTime.getTime()).toBeLessThanOrEqual(afterTime.getTime());
+      const response = await trackPageLoad({
+        appID: 'hr',
+        sessionID: 's009',
+        where: '/hr/employees',
+        timeOnPage: 45200,
+      });
+
+      expect(response.success).toBe(true);
+      expect(global.fetch).toHaveBeenCalledWith(
+        'http://localhost:3000/page-load-events',
+        expect.objectContaining({ method: 'POST' })
+      );
+
+      const body = lastRequestBody();
+      expect(body.appID).toBe('hr');
+      expect(body.sessionID).toBe('s009');
+      expect(body.where).toBe('/hr/employees');
+      expect(body.timeOnPage).toBe(45200);
+      expect(body.dateTime).toMatch(DATE_TIME_REGEX);
+    });
+  });
+
+  describe('trackHttpCall', () => {
+    it('should POST to /http-calls with all fields plus formatted dateTime', async () => {
+      mockFetchSuccess();
+
+      const response = await trackHttpCall({
+        appID: 'crm',
+        sessionID: 's002',
+        endpoint: '/api/crm/deals',
+        method: 'GET',
+        httpStatus: 200,
+        duration: 232,
+      });
+
+      expect(response.success).toBe(true);
+      expect(global.fetch).toHaveBeenCalledWith(
+        'http://localhost:3000/http-calls',
+        expect.objectContaining({ method: 'POST' })
+      );
+
+      const body = lastRequestBody();
+      expect(body.endpoint).toBe('/api/crm/deals');
+      expect(body.method).toBe('GET');
+      expect(body.httpStatus).toBe(200);
+      expect(body.duration).toBe(232);
+      expect(body.dateTime).toMatch(DATE_TIME_REGEX);
+    });
+  });
+
+  describe('trackSession', () => {
+    it('should POST to /sessions with all fields plus formatted startedAt', async () => {
+      mockFetchSuccess();
+
+      const response = await trackSession({
+        sessionID: 's001',
+        appID: 'crm',
+        device: 'desktop',
+        browser: 'Chrome 124',
+        referrer: 'google.com',
+      });
+
+      expect(response.success).toBe(true);
+      expect(global.fetch).toHaveBeenCalledWith(
+        'http://localhost:3000/sessions',
+        expect.objectContaining({ method: 'POST' })
+      );
+
+      const body = lastRequestBody();
+      expect(body.sessionID).toBe('s001');
+      expect(body.device).toBe('desktop');
+      expect(body.browser).toBe('Chrome 124');
+      expect(body.referrer).toBe('google.com');
+      expect(body.startedAt).toMatch(DATE_TIME_REGEX);
+      expect(body.dateTime).toBeUndefined();
     });
   });
 
   describe('HTTP error responses', () => {
+    const clickEvent = {
+      appID: 'crm',
+      sessionID: 's001',
+      where: '/crm/contacts',
+      target: '#btn',
+    };
+
     it('should return error object on 400 HTTP response', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
@@ -99,15 +168,7 @@ describe('trackEvent', () => {
         json: async () => ({ message: 'Bad request' }),
       });
 
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'test-app',
-        action: 'test_action',
-        where: '/test',
-      };
-
-      const response = await trackEvent(entry);
+      const response = await trackClick(clickEvent);
 
       expect(response.success).toBe(false);
       expect(response.error?.code).toBe('HTTP_400');
@@ -123,15 +184,7 @@ describe('trackEvent', () => {
         json: async () => ({ message: 'Internal server error' }),
       });
 
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'test-app',
-        action: 'test_action',
-        where: '/test',
-      };
-
-      const response = await trackEvent(entry);
+      const response = await trackClick(clickEvent);
 
       expect(response.success).toBe(false);
       expect(response.error?.code).toBe('HTTP_500');
@@ -145,15 +198,7 @@ describe('trackEvent', () => {
         json: async () => ({}),
       });
 
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'test-app',
-        action: 'test_action',
-        where: '/test',
-      };
-
-      const response = await trackEvent(entry);
+      const response = await trackClick(clickEvent);
 
       expect(response.success).toBe(false);
       expect(response.error?.code).toBe('HTTP_403');
@@ -162,20 +207,18 @@ describe('trackEvent', () => {
   });
 
   describe('network and fetch errors', () => {
+    const sessionInput = {
+      sessionID: 's001',
+      appID: 'crm',
+      device: 'desktop' as const,
+      browser: 'Chrome 124',
+      referrer: 'direct',
+    };
+
     it('should handle fetch network error', async () => {
-      (global.fetch as jest.Mock).mockRejectedValueOnce(
-        new Error('Network timeout')
-      );
+      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network timeout'));
 
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'test-app',
-        action: 'test_action',
-        where: '/test',
-      };
-
-      const response = await trackEvent(entry);
+      const response = await trackSession(sessionInput);
 
       expect(response.success).toBe(false);
       expect(response.error?.code).toBe('NETWORK_ERROR');
@@ -186,15 +229,7 @@ describe('trackEvent', () => {
     it('should handle non-Error exception from fetch', async () => {
       (global.fetch as jest.Mock).mockRejectedValueOnce('Unknown error');
 
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'test-app',
-        action: 'test_action',
-        where: '/test',
-      };
-
-      const response = await trackEvent(entry);
+      const response = await trackSession(sessionInput);
 
       expect(response.success).toBe(false);
       expect(response.error?.code).toBe('NETWORK_ERROR');
@@ -202,104 +237,18 @@ describe('trackEvent', () => {
     });
 
     it('should handle JSON parsing error in successful response', async () => {
-      const error = new SyntaxError('Invalid JSON');
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => {
-          throw error;
+          throw new SyntaxError('Invalid JSON');
         },
       });
 
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'test-app',
-        action: 'test_action',
-        where: '/test',
-      };
-
-      const response = await trackEvent(entry);
+      const response = await trackSession(sessionInput);
 
       expect(response.success).toBe(false);
       expect(response.error?.code).toBe('NETWORK_ERROR');
       expect(response.error?.message).toBe('Invalid JSON');
-    });
-  });
-
-  describe('edge cases', () => {
-    it('should work with empty string values', async () => {
-      const mockResponse = { success: true };
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
-
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: '',
-        action: '',
-        where: '',
-      };
-
-      const response = await trackEvent(entry);
-
-      expect(response.success).toBe(true);
-
-      const callArgs = (global.fetch as jest.Mock).mock.calls[0][1];
-      const body = JSON.parse(callArgs.body);
-      expect(body.appID).toBe('');
-      expect(body.action).toBe('');
-      expect(body.where).toBe('');
-    });
-
-    it('should work with special characters in values', async () => {
-      const mockResponse = { success: true };
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
-
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'app-@#$%',
-        action: 'action_with_unicode_✓',
-        where: '/path/with spaces',
-      };
-
-      const response = await trackEvent(entry);
-
-      expect(response.success).toBe(true);
-
-      const callArgs = (global.fetch as jest.Mock).mock.calls[0][1];
-      const body = JSON.parse(callArgs.body);
-      expect(body.appID).toBe('app-@#$%');
-      expect(body.action).toBe('action_with_unicode_✓');
-      expect(body.where).toBe('/path/with spaces');
-    });
-
-    it('should preserve original entry object (not mutate)', async () => {
-      const mockResponse = { success: true };
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
-
-      (config.getApiUrl as jest.Mock).mockReturnValue('http://localhost:3000');
-
-      const entry = {
-        appID: 'test-app',
-        action: 'test_action',
-        where: '/test',
-      };
-
-      const entryBefore = JSON.stringify(entry);
-      await trackEvent(entry);
-      const entryAfter = JSON.stringify(entry);
-
-      expect(entryBefore).toBe(entryAfter);
-      expect((entry as any).dateTime).toBeUndefined();
     });
   });
 });
