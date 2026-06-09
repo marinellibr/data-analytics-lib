@@ -18,6 +18,7 @@ import {
   SESSIONS_ENDPOINT,
 } from './config';
 import { formatDateTime } from './date';
+import { sanitizeUrl, truncate } from './sanitize';
 
 const postEvent = async (endpoint: string, payload: unknown): Promise<AnalyticsResponse> => {
   try {
@@ -68,21 +69,48 @@ const postEvent = async (endpoint: string, payload: unknown): Promise<AnalyticsR
 };
 
 export const trackClick = (event: ClickEventInput): Promise<AnalyticsResponse> => {
-  const payload: ClickEvent = { ...event, dateTime: formatDateTime(new Date()) };
+  const payload: ClickEvent = {
+    appID: truncate(event.appID),
+    sessionID: truncate(event.sessionID),
+    where: sanitizeUrl(event.where),
+    target: truncate(event.target),
+    dateTime: formatDateTime(new Date()),
+  };
   return postEvent(CLICK_EVENTS_ENDPOINT, payload);
 };
 
 export const trackPageLoad = (event: PageLoadEventInput): Promise<AnalyticsResponse> => {
-  const payload: PageLoadEvent = { ...event, dateTime: formatDateTime(new Date()) };
+  const payload: PageLoadEvent = {
+    appID: truncate(event.appID),
+    sessionID: truncate(event.sessionID),
+    where: sanitizeUrl(event.where),
+    timeOnPage: event.timeOnPage,
+    dateTime: formatDateTime(new Date()),
+  };
   return postEvent(PAGE_LOAD_EVENTS_ENDPOINT, payload);
 };
 
 export const trackHttpCall = (event: HttpCallEventInput): Promise<AnalyticsResponse> => {
-  const payload: HttpCallEvent = { ...event, dateTime: formatDateTime(new Date()) };
+  const payload: HttpCallEvent = {
+    appID: truncate(event.appID),
+    sessionID: truncate(event.sessionID),
+    endpoint: sanitizeUrl(event.endpoint),
+    method: event.method,
+    httpStatus: event.httpStatus,
+    duration: event.duration,
+    dateTime: formatDateTime(new Date()),
+  };
   return postEvent(HTTP_CALLS_ENDPOINT, payload);
 };
 
 export const trackSession = (session: SessionInput): Promise<AnalyticsResponse> => {
-  const payload: Session = { ...session, startedAt: formatDateTime(new Date()) };
+  const payload: Session = {
+    sessionID: truncate(session.sessionID),
+    appID: truncate(session.appID),
+    device: session.device,
+    browser: truncate(session.browser),
+    referrer: sanitizeUrl(session.referrer),
+    startedAt: formatDateTime(new Date()),
+  };
   return postEvent(SESSIONS_ENDPOINT, payload);
 };

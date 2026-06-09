@@ -175,6 +175,7 @@ interface AnalyticsResponse {
 
 - ✅ **DateTime**: A data/hora atual é adicionada automaticamente ao objeto enviado, no formato `dd/MM/yyyy hh:mm AM/PM` (campo `dateTime`, ou `startedAt` para sessões)
 - ✅ **POST**: Requisição HTTP POST é feita para o endpoint correspondente do backend (`/click-events`, `/page-load-events`, `/http-calls`, `/sessions`)
+- ✅ **Privacidade**: Query strings e fragments são removidos automaticamente de `where`, `endpoint` e `referrer` antes do envio (evita vazar tokens, e-mails e termos de busca), e todos os campos de texto são truncados em 500 caracteres
 - ✅ **Erro Estruturado**: Erros de rede e HTTP são capturados e retornados de forma estruturada
 - ✅ **TypeScript**: Typings completos em TypeScript
 

@@ -53,6 +53,21 @@ describe('track functions', () => {
       expect(body.dateTime).toMatch(DATE_TIME_REGEX);
     });
 
+    it('should strip query strings from where but keep CSS selector in target', async () => {
+      mockFetchSuccess();
+
+      await trackClick({
+        appID: 'crm',
+        sessionID: 's001',
+        where: '/crm/contacts?email=user@example.com#row-3',
+        target: '#btn-new-contact',
+      });
+
+      const body = lastRequestBody();
+      expect(body.where).toBe('/crm/contacts');
+      expect(body.target).toBe('#btn-new-contact');
+    });
+
     it('should preserve original event object (not mutate)', async () => {
       mockFetchSuccess();
 
