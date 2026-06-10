@@ -1,47 +1,57 @@
 export type DeviceType = 'desktop' | 'mobile' | 'tablet';
-
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+export type EventType = 'click' | 'pageview';
 
-export interface ClickEvent {
+// Unified event with discriminated union
+export interface BaseEvent {
   appID: string;
   sessionID: string;
-  where: string;
-  target: string; // CSS selector or element label
-  dateTime: string; // dd/MM/yyyy hh:mm AM/PM
+  timestamp: string; // ISO 8601 format stored as string, converted to Date on backend
+  location: string; // URL path without domain/query/fragment
 }
 
-export interface PageLoadEvent {
-  appID: string;
-  sessionID: string;
-  where: string;
-  timeOnPage: number; // ms
-  dateTime: string; // dd/MM/yyyy hh:mm AM/PM
+export interface ClickEvent extends BaseEvent {
+  type: 'click';
+  element?: string; // CSS selector or element label
 }
+
+export interface PageViewEvent extends BaseEvent {
+  type: 'pageview';
+  timeOnPage: number; // milliseconds
+}
+
+export type Event = ClickEvent | PageViewEvent;
 
 export interface HttpCallEvent {
   appID: string;
   sessionID: string;
+  timestamp: string; // ISO 8601 format
   endpoint: string;
   method: HttpMethod;
-  httpStatus: number;
-  duration: number; // response time in ms
-  dateTime: string; // dd/MM/yyyy hh:mm AM/PM
+  status: number; // HTTP status code (200, 404, 500, etc.)
+  duration: number; // response time in milliseconds
+}
+
+export interface SessionContext {
+  device: DeviceType;
+  browser: string;
+  referrer: string; // stripped of query/fragment
 }
 
 export interface Session {
   sessionID: string;
   appID: string;
-  device: DeviceType;
-  browser: string;
-  referrer: string;
-  startedAt: string; // dd/MM/yyyy hh:mm AM/PM
+  userID?: string; // optional, derived from fingerprint or explicit tracking
+  context: SessionContext;
+  startTime: string; // ISO 8601 format
+  endTime?: string; // ISO 8601 format (optional, set on session end)
 }
 
-// Inputs accepted by the track functions: the timestamp is filled in by the lib
-export type ClickEventInput = Omit<ClickEvent, 'dateTime'>;
-export type PageLoadEventInput = Omit<PageLoadEvent, 'dateTime'>;
-export type HttpCallEventInput = Omit<HttpCallEvent, 'dateTime'>;
-export type SessionInput = Omit<Session, 'startedAt'>;
+// Inputs accepted by the track functions: timestamp is filled in by the lib
+export type ClickEventInput = Omit<ClickEvent, 'timestamp'>;
+export type PageViewEventInput = Omit<PageViewEvent, 'timestamp'>;
+export type HttpCallEventInput = Omit<HttpCallEvent, 'timestamp'>;
+export type SessionInput = Omit<Session, 'startTime' | 'endTime'>;
 
 export interface AnalyticsError {
   code: string;

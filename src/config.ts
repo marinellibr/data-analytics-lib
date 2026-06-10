@@ -13,7 +13,6 @@ export const getApiUrl = (): string => {
   return baseUrl;
 };
 
-export const CLICK_EVENTS_ENDPOINT = '/click-events';
-export const PAGE_LOAD_EVENTS_ENDPOINT = '/page-load-events';
+export const EVENTS_ENDPOINT = '/events';
 export const HTTP_CALLS_ENDPOINT = '/http-calls';
 export const SESSIONS_ENDPOINT = '/sessions';

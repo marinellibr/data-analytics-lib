@@ -1,8 +1,8 @@
 import {
   ClickEvent,
   ClickEventInput,
-  PageLoadEvent,
-  PageLoadEventInput,
+  PageViewEvent,
+  PageViewEventInput,
   HttpCallEvent,
   HttpCallEventInput,
   Session,
@@ -12,12 +12,10 @@ import {
 } from './types';
 import {
   getApiUrl,
-  CLICK_EVENTS_ENDPOINT,
-  PAGE_LOAD_EVENTS_ENDPOINT,
+  EVENTS_ENDPOINT,
   HTTP_CALLS_ENDPOINT,
   SESSIONS_ENDPOINT,
 } from './config';
-import { formatDateTime } from './date';
 import { sanitizeUrl, truncate } from './sanitize';
 
 const postEvent = async (endpoint: string, payload: unknown): Promise<AnalyticsResponse> => {
@@ -70,24 +68,26 @@ const postEvent = async (endpoint: string, payload: unknown): Promise<AnalyticsR
 
 export const trackClick = (event: ClickEventInput): Promise<AnalyticsResponse> => {
   const payload: ClickEvent = {
+    type: 'click',
     appID: truncate(event.appID),
     sessionID: truncate(event.sessionID),
-    where: sanitizeUrl(event.where),
-    target: truncate(event.target),
-    dateTime: formatDateTime(new Date()),
+    location: sanitizeUrl(event.location),
+    element: event.element ? truncate(event.element) : undefined,
+    timestamp: new Date().toISOString(),
   };
-  return postEvent(CLICK_EVENTS_ENDPOINT, payload);
+  return postEvent(EVENTS_ENDPOINT, payload);
 };
 
-export const trackPageLoad = (event: PageLoadEventInput): Promise<AnalyticsResponse> => {
-  const payload: PageLoadEvent = {
+export const trackPageLoad = (event: PageViewEventInput): Promise<AnalyticsResponse> => {
+  const payload: PageViewEvent = {
+    type: 'pageview',
     appID: truncate(event.appID),
     sessionID: truncate(event.sessionID),
-    where: sanitizeUrl(event.where),
+    location: sanitizeUrl(event.location),
     timeOnPage: event.timeOnPage,
-    dateTime: formatDateTime(new Date()),
+    timestamp: new Date().toISOString(),
   };
-  return postEvent(PAGE_LOAD_EVENTS_ENDPOINT, payload);
+  return postEvent(EVENTS_ENDPOINT, payload);
 };
 
 export const trackHttpCall = (event: HttpCallEventInput): Promise<AnalyticsResponse> => {
@@ -96,9 +96,9 @@ export const trackHttpCall = (event: HttpCallEventInput): Promise<AnalyticsRespo
     sessionID: truncate(event.sessionID),
     endpoint: sanitizeUrl(event.endpoint),
     method: event.method,
-    httpStatus: event.httpStatus,
+    status: event.status,
     duration: event.duration,
-    dateTime: formatDateTime(new Date()),
+    timestamp: new Date().toISOString(),
   };
   return postEvent(HTTP_CALLS_ENDPOINT, payload);
 };
@@ -107,10 +107,13 @@ export const trackSession = (session: SessionInput): Promise<AnalyticsResponse> 
   const payload: Session = {
     sessionID: truncate(session.sessionID),
     appID: truncate(session.appID),
-    device: session.device,
-    browser: truncate(session.browser),
-    referrer: sanitizeUrl(session.referrer),
-    startedAt: formatDateTime(new Date()),
+    userID: session.userID ? truncate(session.userID) : undefined,
+    context: {
+      device: session.context.device,
+      browser: truncate(session.context.browser),
+      referrer: sanitizeUrl(session.context.referrer),
+    },
+    startTime: new Date().toISOString(),
   };
   return postEvent(SESSIONS_ENDPOINT, payload);
 };
