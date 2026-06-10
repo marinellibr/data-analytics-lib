@@ -36,20 +36,19 @@ describe('config', () => {
       process.env.API_URL_PROD = originalApiUrl;
     });
 
-    it('should throw error if API_URL_PROD is not set in production', () => {
+    it('should use default Vercel URL when API_URL_PROD is not set in production', () => {
       const originalEnv = process.env.NODE_ENV;
       const originalApiUrl = process.env.API_URL_PROD;
-      
+
       process.env.NODE_ENV = 'production';
       delete process.env.API_URL_PROD;
-      
+
       jest.resetModules();
       const { getApiUrl } = require('../config');
+      const url = getApiUrl();
 
-      expect(() => getApiUrl()).toThrow(
-        'API_URL_PROD environment variable is not set in production'
-      );
-      
+      expect(url).toBe('https://data-analytics-backend-two.vercel.app');
+
       process.env.NODE_ENV = originalEnv;
       if (originalApiUrl) process.env.API_URL_PROD = originalApiUrl;
     });

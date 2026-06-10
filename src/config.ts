@@ -1,7 +1,7 @@
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 const DEV_API_URL = 'http://localhost:3000';
-const PROD_API_URL = process.env.API_URL_PROD || '';
+const PROD_API_URL = process.env.API_URL_PROD || 'https://data-analytics-backend-two.vercel.app';
 
 export const getApiUrl = (): string => {
   const baseUrl = isDevelopment ? DEV_API_URL : PROD_API_URL;
