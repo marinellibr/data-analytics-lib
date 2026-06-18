@@ -47,9 +47,10 @@ export interface Session {
   endTime?: string; // ISO 8601 format (optional, set on session end)
 }
 
-// Inputs accepted by the track functions: timestamp is filled in by the lib
-export type ClickEventInput = Omit<ClickEvent, 'timestamp'>;
-export type PageViewEventInput = Omit<PageViewEvent, 'timestamp'>;
+// Inputs accepted by the track functions: timestamp and the type
+// discriminator are filled in by the lib
+export type ClickEventInput = Omit<ClickEvent, 'timestamp' | 'type'>;
+export type PageViewEventInput = Omit<PageViewEvent, 'timestamp' | 'type'>;
 export type HttpCallEventInput = Omit<HttpCallEvent, 'timestamp'>;
 export type SessionInput = Omit<Session, 'startTime' | 'endTime'>;
 
