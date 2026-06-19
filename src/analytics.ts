@@ -29,6 +29,9 @@ const postEvent = async (endpoint: string, payload: unknown): Promise<AnalyticsR
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
+      // Allows the request to outlive the page (e.g. events sent while the
+      // tab is being closed / unloaded are still delivered)
+      keepalive: true,
     });
 
     const data = await response.json();
