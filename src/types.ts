@@ -36,6 +36,7 @@ export interface SessionContext {
   device: DeviceType;
   browser: string;
   referrer: string; // stripped of query/fragment
+  utmSource?: string; // marketing attribution (utm_source), optional
 }
 
 export interface Session {
