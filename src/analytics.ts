@@ -115,6 +115,9 @@ export const trackSession = (session: SessionInput): Promise<AnalyticsResponse> 
       device: session.context.device,
       browser: truncate(session.context.browser),
       referrer: sanitizeUrl(session.context.referrer),
+      utmSource: session.context.utmSource
+        ? truncate(session.context.utmSource)
+        : undefined,
     },
     startTime: new Date().toISOString(),
   };
