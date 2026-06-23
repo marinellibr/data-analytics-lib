@@ -126,6 +126,9 @@ export const trackSession = (session: SessionInput): Promise<AnalyticsResponse> 
       utmSource: session.context.utmSource
         ? truncate(session.context.utmSource)
         : undefined,
+      utmMedium: session.context.utmMedium
+        ? truncate(session.context.utmMedium)
+        : undefined,
     },
     startTime: new Date().toISOString(),
   };
