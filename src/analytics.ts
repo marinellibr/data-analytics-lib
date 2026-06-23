@@ -17,8 +17,16 @@ import {
   SESSIONS_ENDPOINT,
 } from './config';
 import { sanitizeUrl, truncate } from './sanitize';
+import { isBot } from './bot';
 
 const postEvent = async (endpoint: string, payload: unknown): Promise<AnalyticsResponse> => {
+  // Drop anything coming from automated clients (headless browsers, crawlers)
+  // at the source: no request is sent, so bot noise never reaches the backend
+  // or the dashboard.
+  if (isBot()) {
+    return { success: true, data: { skipped: 'bot' } };
+  }
+
   try {
     const apiUrl = getApiUrl();
     const url = `${apiUrl}${endpoint}`;
