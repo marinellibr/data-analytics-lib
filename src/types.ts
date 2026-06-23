@@ -37,6 +37,8 @@ export interface SessionContext {
   browser: string;
   referrer: string; // stripped of query/fragment
   utmSource?: string; // marketing attribution (utm_source), optional
+  country?: string; // ISO country code, enriched server-side from edge geo
+  city?: string; // city name, enriched server-side from edge geo
 }
 
 export interface Session {
