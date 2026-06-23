@@ -1,6 +1,5 @@
 import {
-  CLICK_EVENTS_ENDPOINT,
-  PAGE_LOAD_EVENTS_ENDPOINT,
+  EVENTS_ENDPOINT,
   HTTP_CALLS_ENDPOINT,
   SESSIONS_ENDPOINT,
 } from '../config';
@@ -56,8 +55,7 @@ describe('config', () => {
 
   describe('endpoints', () => {
     it('should export correct endpoints', () => {
-      expect(CLICK_EVENTS_ENDPOINT).toBe('/click-events');
-      expect(PAGE_LOAD_EVENTS_ENDPOINT).toBe('/page-load-events');
+      expect(EVENTS_ENDPOINT).toBe('/events');
       expect(HTTP_CALLS_ENDPOINT).toBe('/http-calls');
       expect(SESSIONS_ENDPOINT).toBe('/sessions');
     });
